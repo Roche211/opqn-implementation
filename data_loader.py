@@ -30,7 +30,7 @@ def get_datasets_transform(dataset, data_dir="./data", cross_eval=False):
         transform_test = transform_train
 
     else:
-        if datasets=="vggface2":
+        if dataset=="vggface2":
             transform_train = torch.nn.Sequential(
                     transforms.Resize(120),
                     transforms.RandomCrop(112),

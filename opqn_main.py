@@ -26,6 +26,7 @@ parser.add_argument('--len', nargs='+', type=int, help='length of hashing codes,
 parser.add_argument('--dataset', type=str, default='facescrub', help='which dataset for training.(one of facescrub, youtube, CFW, and VGGFace2)')
 parser.add_argument('--num', nargs='+', type=int, help='num. of codebooks, could be 4, 8...}')
 parser.add_argument('--words', nargs='+', type=int, default=[256, 256, 256, 256], help='num of words,  should be exponential of 2')
+parser.add_argument('--data-dir', type=str, default='./data', help='root directory containing dataset subfolders')
 
 parser.add_argument('--margin', default=0.5, type=float, help='margin of cosine similarity')
 parser.add_argument('--miu', default=0.1, type=float, help='Balance weight of reduncy loss')
@@ -33,8 +34,8 @@ parser.add_argument('--miu', default=0.1, type=float, help='Balance weight of re
 
 args = parser.parse_args()
 
-trainset, testset = get_datasets_transform(args.dataset, cross_eval=args.c)['dataset']
-transform_train, transform_test = get_datasets_transform(args.dataset, cross_eval=args.c)['transform']
+trainset, testset = get_datasets_transform(args.dataset, data_dir=args.data_dir, cross_eval=args.cross_dataset)['dataset']
+transform_train, transform_test = get_datasets_transform(args.dataset, data_dir=args.data_dir, cross_eval=args.cross_dataset)['transform']
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.bs, shuffle=True, pin_memory=True, num_workers=4)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.bs, shuffle=False, pin_memory=True, num_workers=4)
@@ -83,7 +84,7 @@ def train(save_path, length, num, words, feature_dim):
     for i in range(1, num):
         code_books[i] = matrix @ code_books[i-1]
 
-    if args.c or args.dataset == "vggface2":
+    if args.cross_dataset or args.dataset == "vggface2":
 
         net = resnet20_pq(num_layers=20, feature_dim=feature_dim)
         metric = OrthoPQ(in_features=feature_dim, out_features=num_classes, num_books=num, code_books=code_books, num_words=words, sc=40, m=args.margin)
@@ -115,7 +116,7 @@ def train(save_path, length, num, words, feature_dim):
 
     else:
         scheduler = adjust_lr(20, 0.5)
-        EPOCHS = 160
+        EPOCHS = 200
         optimizer = optim.SGD([{'params': net.parameters()}, {'params': metric.parameters()}], lr=args.lr, weight_decay=5e-4, momentum=0.9)
 
     since = time.time()
@@ -199,7 +200,7 @@ def test(load_path, length, num, words, feature_dim):
 
     print("===============evaluation on model %s===============" % load_path)
 
-    if args.c:
+    if args.cross_dataset:
         net = resnet20_pq(num_layers=20, feature_dim=feature_dim)
     else:
         if args.dataset in ["facescrub", "cfw", "youtube"]:
@@ -250,7 +251,7 @@ if __name__ == "__main__":
     if args.evaluate:
         assert len(args.load) == len(args.num), 'model paths must be in line with # code lengths'
         for i, (num_s, words_s) in enumerate(zip(args.num, args.words)):
-            if args.c:
+            if args.cross_dataset:
                 feature_dim = num_s * words_s
             else:
                 if args.dataset!="vggface2":

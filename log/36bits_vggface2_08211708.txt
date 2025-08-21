@@ -1,0 +1,19 @@
+[Configuration] Training on dataset: vggface2
+  Len_bits: 36
+ Batch_size: 256
+ learning rate: 0.100
+ num_books: 6
+ num_words: 64
+HyperParams:
+margin: 0.500	 miu: 0.1000
+==> Building model..
+number of identities:  2787
+number of training images:  709662
+number of test images:  139350
+number of training batches per epoch: 2773
+number of testing batches per epoch: 545
+num. of codebooks:  6
+num. of words per book:  64
+dim. of word:  64
+code length: 36-bit 	 learning rate: 0.100 	 scale length: 40 	 penalty margin: 0.50 	 balance_weight: 0.100
+==> Epoch: 1
