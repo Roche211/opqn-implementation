@@ -1,3 +1,37 @@
+# Reproduction notes (Tadhg Roche, August 2025)
+
+This repository is a fork of the official OPQN code by Ming Zhang, Xuefei Zhe and Hong Yan
+(*Orthonormal Product Quantization Network for Scalable Face Image Retrieval*, Pattern Recognition, 2023).
+Everything below this section is their README, kept as published. My aim was to get the method running
+end to end on VGGFace2 and check that it reaches the kind of retrieval performance the paper reports.
+
+## What I changed
+
+- **Fixed a crash on VGGFace2:** `data_loader.py` referenced `datasets` instead of `dataset`, so the VGGFace2
+  branch never ran. Also renamed the cross-dataset flag (`args.c` → `args.cross_dataset`) and added a
+  `--data-dir` argument so the dataset can live outside the repo.
+- **Rewrote the per-sample transforms** in the data loader so that every image is resized/cropped to a fixed size
+  before batching (the original pipeline produced mismatched tensor sizes on this data).
+- **Built a leak-free split:** a per-identity train/test split of a 480-identity VGGFace2 subset
+  (141,308 training and 35,090 test images), with every identity present in both splits and no image in both.
+
+## What I got
+
+- 64-bit model (8 codebooks × 256 words), batch size 256, lr 0.1, 160 epochs on a single cloud GPU
+  (about 72 s per epoch): **mAP 97.27%, top-k precision 96.92%** on the held-out split.
+- A small retrieval demo (`notebooks/`) that loads the checkpoint and returns the nearest faces for a query image.
+- An attempt at the full official split (709,662 training images, 2,787 identities) at 36 and 64 bits ran at
+  25–30 minutes per epoch and did not converge in the budget I had (`log/`); the first author kindly shared a
+  trained VGGFace2 checkpoint and the supplementary material by email.
+
+## Running the reproduction
+
+The Colab notebook in `notebooks/OPQN_vggface2_reproduction.ipynb` contains the full sequence: clone, patch,
+download the subset from Kaggle, split, train, evaluate, and demo. The trained checkpoint (243 MB) is not
+committed; ask me for it.
+
+---
+
 # Orthonormal Product Quantization Network for Scalable Face Image Retrieval
 Pytorch implementation of "[Orthonormal Product Quantization Network for Scalable Face Image Retrieval](https://arxiv.org/abs/2107.00327) (OPQN)".
 
